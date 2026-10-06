@@ -1,0 +1,1032 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CLINIMANT - Sistema Integral de Mantenimiento</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        tailwind.config = { theme: { extend: { colors: { brand: { 50: '#f0f9ff', 100: '#e0f2fe', 500: '#0ea5e9', 600: '#0284c7', 700: '#0369a1', 900: '#0c4a6e' } } } } }
+    </script>
+    <link rel="stylesheet" href="/styles.css">
+</head>
+<body class="flex w-full bg-slate-50 h-screen overflow-hidden text-slate-800 transition-colors duration-300">
+
+    <!-- Pantalla de Carga -->
+    <div id="globalLoader" class="fixed inset-0 bg-slate-50 dark:bg-slate-900 z-[200] flex flex-col items-center justify-center transition-opacity duration-500">
+        <img src="/logo.jpg" alt="Logo" class="w-28 h-28 rounded-full shadow-xl shadow-brand-500/20 mb-8 object-cover border-4 border-white animate-pulse">
+        <div class="flex gap-2 mb-4">
+            <div class="w-3 h-3 bg-brand-500 rounded-full animate-bounce" style="animation-delay: 0s"></div>
+            <div class="w-3 h-3 bg-brand-500 rounded-full animate-bounce" style="animation-delay: 0.15s"></div>
+            <div class="w-3 h-3 bg-brand-500 rounded-full animate-bounce" style="animation-delay: 0.3s"></div>
+        </div>
+        <p class="text-slate-500 dark:text-slate-400 font-bold tracking-widest text-sm uppercase">Cargando CLINIMANT</p>
+    </div>
+
+
+    <!-- Mobile Overlay -->
+    <div id="mobileOverlay" onclick="toggleMobileMenu()" class="fixed inset-0 bg-slate-900/50 z-30 hidden md:hidden"></div>
+
+    <aside id="sidebar" class="fixed md:static inset-y-0 left-0 w-64 bg-white flex flex-col transition-transform duration-300 z-40 shadow-lg shrink-0 border-r border-slate-200 -translate-x-full md:translate-x-0">
+        <div class="h-16 flex items-center px-6 border-b border-slate-100 bg-white">
+            <img src="/logo.jpg" alt="Logo" class="w-10 h-10 rounded-full mr-3 shadow-sm border border-slate-200 object-cover">
+            <span class="text-xl font-bold text-slate-800 tracking-wide">CLINIMANT</span>
+            <button onclick="toggleMobileMenu()" class="ml-auto md:hidden text-slate-400 hover:text-slate-600"><i class="fa-solid fa-xmark text-xl"></i></button>
+        </div>
+        <nav class="flex-1 overflow-y-auto py-4 px-3 space-y-1" id="nav-menu">
+            <button data-target="dashboard" class="nav-btn w-full flex items-center px-3 py-2.5 bg-brand-50 text-brand-700 rounded-lg font-bold transition-all"><i class="fa-solid fa-chart-pie w-6 text-center"></i> Dashboard</button>
+            <button data-target="equipos" class="nav-btn w-full flex items-center px-3 py-2.5 text-slate-600 hover:bg-slate-50 hover:text-brand-600 rounded-lg font-medium transition-all"><i class="fa-solid fa-server w-6 text-center"></i> Equipos</button>
+            <button data-target="plano" class="nav-btn w-full flex items-center px-3 py-2.5 text-slate-600 hover:bg-slate-50 hover:text-brand-600 rounded-lg font-medium transition-all"><i class="fa-solid fa-map-location-dot w-6 text-center"></i> Plano Interactivo</button>
+            <button data-target="mantenimientos" class="nav-btn w-full flex items-center px-3 py-2.5 text-slate-600 hover:bg-slate-50 hover:text-brand-600 rounded-lg font-medium transition-all"><i class="fa-solid fa-screwdriver-wrench w-6 text-center"></i> Mantenimientos</button>
+            <button data-target="repuestos" class="nav-btn w-full flex items-center px-3 py-2.5 text-slate-600 hover:bg-slate-50 hover:text-brand-600 rounded-lg font-medium transition-all"><i class="fa-solid fa-boxes-stacked w-6 text-center"></i> Repuestos</button>
+            <div class="pt-4 pb-2"><p class="px-3 text-xs font-bold text-slate-400 uppercase tracking-wider">Administración</p></div>
+            <button data-target="tecnicos" class="nav-btn w-full flex items-center px-3 py-2.5 text-slate-600 hover:bg-slate-50 hover:text-brand-600 rounded-lg font-medium transition-all"><i class="fa-solid fa-users-gear w-6 text-center"></i> Personal Técnico</button>
+            <button data-target="proveedores" class="nav-btn w-full flex items-center px-3 py-2.5 text-slate-600 hover:bg-slate-50 hover:text-brand-600 rounded-lg font-medium transition-all"><i class="fa-solid fa-truck-field w-6 text-center"></i> Proveedores</button>
+        </nav>
+        <div onclick="logout()" class="p-4 border-t border-slate-100 bg-slate-50 cursor-pointer hover:bg-slate-100 hover:text-red-600 transition-colors group"><div class="flex items-center justify-between"><div class="flex items-center overflow-hidden"><img src="https://ui-avatars.com/api/?name=Admin+Clinica&background=0284c7&color=fff" alt="User" class="w-10 h-10 rounded-full border border-slate-300"><div class="ml-3 overflow-hidden"><p class="text-sm font-bold text-slate-700 truncate">Administración</p><p class="text-xs text-slate-500 truncate group-hover:text-red-500">Cerrar Sesión</p></div></div><i class="fa-solid fa-right-from-bracket text-slate-400 group-hover:text-red-500"></i></div></div>
+    </aside>
+
+    <div class="flex-1 flex flex-col h-screen overflow-hidden min-w-0">
+        <header class="h-16 bg-white border-b border-slate-200 flex items-center justify-between px-4 md:px-6 shrink-0 z-20 sticky top-0 shadow-sm">
+            <div class="flex items-center gap-3">
+                <button onclick="toggleMobileMenu()" class="md:hidden text-slate-500 hover:text-brand-600 focus:outline-none p-1">
+                    <i class="fa-solid fa-bars text-xl"></i>
+                </button>
+                <h1 id="page-title" class="text-lg md:text-xl font-bold text-slate-800 truncate">Dashboard General</h1>
+            </div>
+            <div class="flex items-center space-x-2 md:space-x-4">
+                <div class="relative hidden md:block w-64 group">
+                    <i class="fa-solid fa-search absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400 group-focus-within:text-brand-500 transition-colors"></i>
+                    <input type="text" id="globalSearchInput" oninput="handleGlobalSearch(event)" placeholder="Buscar equipo, repuesto, sección..." class="w-full pl-10 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:bg-white focus:border-brand-500 focus:ring-2 focus:ring-brand-100 outline-none transition-all">
+                    <!-- Dropdown de resultados -->
+                    <div id="globalSearchResults" class="absolute left-0 right-0 top-full mt-2 bg-white rounded-xl shadow-xl border border-slate-200 overflow-hidden hidden z-50 max-h-80 overflow-y-auto">
+                        <!-- JS fills this -->
+                    </div>
+                </div>
+                
+                <button onclick="toggleDarkMode()" class="relative w-10 h-10 rounded-full bg-slate-50 text-slate-600 hover:bg-slate-100 flex items-center justify-center transition-colors border border-slate-200" title="Modo Nocturno">
+                    <i id="darkModeIcon" class="fa-solid fa-moon"></i>
+                </button>
+
+                <button onclick="document.getElementById('fallaEq').value=''; openModal('modalFalla')" class="btn-clicky px-3 py-2 rounded-lg bg-red-50 text-red-600 hover:bg-red-100 flex items-center font-bold text-sm border border-red-200 transition-colors"><i class="fa-solid fa-triangle-exclamation mr-2"></i> Reportar Falla</button>
+
+                <div class="relative">
+                    <button onclick="toggleNotifs()" class="relative w-10 h-10 rounded-full bg-slate-50 text-slate-600 hover:bg-slate-100 flex items-center justify-center transition-colors border border-slate-200">
+                        <i class="fa-regular fa-bell"></i>
+                        <span id="notifBadge" class="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full border border-white hidden"></span>
+                    </button>
+                    <!-- Dropdown Notificaciones -->
+                    <div id="notifDropdown" class="absolute right-0 mt-2 w-80 bg-white rounded-xl shadow-xl border border-slate-200 z-50 overflow-hidden flex flex-col">
+                        <div class="p-3 border-b border-slate-100 bg-slate-50 flex justify-between items-center">
+                            <h4 class="font-bold text-sm text-slate-700">Notificaciones</h4>
+                            <span id="notifCount" class="text-xs font-bold bg-brand-100 text-brand-700 px-2 py-0.5 rounded-full">0</span>
+                        </div>
+                        <div id="notifList" class="max-h-80 overflow-y-auto p-2 space-y-1">
+                            <!-- JS fills this -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <main class="flex-1 overflow-y-auto p-6 relative">
+            
+            <!-- VIEW: DASHBOARD -->
+            <div id="view-dashboard" class="view-section active">
+                <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
+                    <div><h2 class="text-2xl font-bold text-slate-800">Hola, Administración</h2><p class="text-slate-500">Resumen operativo de la clínica al día de hoy.</p></div>
+                    <div class="flex gap-2">
+                        <button onclick="switchView('mantenimientos')" class="btn-clicky px-4 py-2 bg-white border border-slate-200 text-slate-700 rounded-lg shadow-sm hover:bg-slate-50 font-medium text-sm flex items-center transition-all"><i class="fa-solid fa-triangle-exclamation text-red-500 mr-2"></i> Fallas Pendientes</button>
+                    </div>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+                    <div class="card-hover bg-white rounded-xl p-5 border border-slate-200 shadow-sm relative overflow-hidden group"><div class="absolute right-0 top-0 w-24 h-24 bg-brand-50 rounded-bl-full transition-transform group-hover:scale-110"></div><div class="relative z-10 flex justify-between items-start"><div><p class="text-sm font-medium text-slate-500 mb-1">Total Equipos</p><h3 class="text-3xl font-bold text-slate-800" id="dash-eq">0</h3></div><div class="w-10 h-10 rounded-lg bg-brand-100 text-brand-600 flex items-center justify-center"><i class="fa-solid fa-server"></i></div></div><div class="mt-4 flex items-center text-sm"><span class="text-emerald-500 font-medium">Actualizado</span></div></div>
+                    <div class="card-hover bg-white rounded-xl p-5 border border-slate-200 shadow-sm relative overflow-hidden group"><div class="absolute right-0 top-0 w-24 h-24 bg-amber-50 rounded-bl-full transition-transform group-hover:scale-110"></div><div class="relative z-10 flex justify-between items-start"><div><p class="text-sm font-medium text-slate-500 mb-1">Mtto. Preventivo</p><h3 class="text-3xl font-bold text-slate-800" id="dash-prev">0</h3></div><div class="w-10 h-10 rounded-lg bg-amber-100 text-amber-600 flex items-center justify-center"><i class="fa-solid fa-calendar-check"></i></div></div><div class="mt-4 flex items-center text-sm"><span class="text-amber-500 font-medium" id="dash-prev-desc">Pendientes</span></div></div>
+                    <div class="card-hover bg-white rounded-xl p-5 border border-slate-200 shadow-sm relative overflow-hidden group"><div class="absolute right-0 top-0 w-24 h-24 bg-red-50 rounded-bl-full transition-transform group-hover:scale-110"></div><div class="relative z-10 flex justify-between items-start"><div><p class="text-sm font-medium text-slate-500 mb-1">Fallas Reportadas</p><h3 class="text-3xl font-bold text-slate-800" id="dash-fallas">0</h3></div><div class="w-10 h-10 rounded-lg bg-red-100 text-red-600 flex items-center justify-center"><i class="fa-solid fa-triangle-exclamation"></i></div></div><div class="mt-4 flex items-center text-sm"><span class="text-red-500 font-medium" id="dash-fallas-desc">Requieren atención</span></div></div>
+                    <div class="card-hover bg-white rounded-xl p-5 border border-slate-200 shadow-sm relative overflow-hidden group"><div class="absolute right-0 top-0 w-24 h-24 bg-emerald-50 rounded-bl-full transition-transform group-hover:scale-110"></div><div class="relative z-10 flex justify-between items-start"><div><p class="text-sm font-medium text-slate-500 mb-1">Gasto Acumulado</p><h3 class="text-3xl font-bold text-slate-800">$12.4K</h3></div><div class="w-10 h-10 rounded-lg bg-emerald-100 text-emerald-600 flex items-center justify-center"><i class="fa-solid fa-file-invoice-dollar"></i></div></div><div class="mt-4 flex items-center text-sm"><span class="text-slate-500 font-medium">Presupuesto mensual: $15K</span></div></div>
+                </div>
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    <div class="bg-white rounded-xl border border-slate-200 shadow-sm p-5 lg:col-span-2"><h3 class="text-lg font-bold text-slate-800 mb-4">Mantenimientos vs Fallas (2026)</h3><div class="h-64 relative"><canvas id="dashboardChart"></canvas></div></div>
+                    <div class="bg-white rounded-xl border border-slate-200 shadow-sm p-5 flex flex-col"><div class="flex justify-between items-center mb-4"><h3 class="text-lg font-bold text-slate-800">Alertas Recientes</h3></div>
+                        <div class="flex-1 overflow-y-auto pr-2 space-y-4">
+                            <div class="flex gap-3"><div class="w-2 h-2 mt-2 rounded-full bg-red-500 shrink-0"></div><div><p class="text-sm font-medium text-slate-800">Falla en Planta Eléctrica</p><span class="inline-block px-2 py-0.5 bg-red-50 text-red-600 border rounded text-[10px] uppercase font-bold">Alta Prioridad</span></div></div>
+                            <div class="flex gap-3"><div class="w-2 h-2 mt-2 rounded-full bg-amber-500 shrink-0"></div><div><p class="text-sm font-medium text-slate-800">Mantenimiento Próximo</p><span class="inline-block px-2 py-0.5 bg-amber-50 text-amber-600 border rounded text-[10px] uppercase font-bold">Programado</span></div></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- VIEW: EQUIPOS -->
+            <div id="view-equipos" class="view-section">
+                <div class="flex flex-col md:flex-row justify-between items-center mb-6 gap-4">
+                    <div><h2 class="text-2xl font-bold text-slate-800">Inventario de Equipos</h2></div>
+                    <button onclick="openModal('modalEquipo')" class="px-4 py-2 bg-brand-600 text-white rounded-lg shadow-md hover:bg-brand-700 font-medium text-sm flex items-center transition-all btn-clicky"><i class="fa-solid fa-plus mr-2"></i> Registrar Equipo</button>
+                </div>
+                <!-- Filters -->
+                <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm mb-6 flex flex-wrap gap-4 items-center">
+                    <div class="flex-1 min-w-[200px] relative">
+                        <i class="fa-solid fa-search absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400"></i>
+                        <input type="text" id="filterEqSearch" oninput="filtrarEquipos()" placeholder="Buscar por código, nombre o marca..." class="w-full pl-10 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:bg-white focus:border-brand-500 focus:ring-2 focus:ring-brand-100 outline-none transition-all">
+                    </div>
+                    <select id="filterEqTipo" onchange="filtrarEquipos()" class="px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm text-slate-600 outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-100">
+                        <option value="">Todos los tipos</option>
+                        <option value="Aire">Aires Acondicionados</option>
+                        <option value="Ascensor">Ascensores</option>
+                        <option value="Planta">Planta Eléctrica</option>
+                        <option value="Computador">Computadores</option>
+                    </select>
+                    <select id="filterEqEstado" onchange="filtrarEquipos()" class="px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm text-slate-600 outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-100">
+                        <option value="">Todos los estados</option>
+                        <option value="Operativo">Operativos</option>
+                        <option value="Mantenimiento">En Mantenimiento</option>
+                        <option value="Fuera">Fuera de Servicio</option>
+                    </select>
+                </div>
+                <div class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+                    <div class="overflow-x-auto"><table class="w-full data-table text-left border-collapse">
+                        <thead><tr><th>ID / Código</th><th>Equipo</th><th>Marca</th><th>Ubicación</th><th>Estado</th><th class="text-center">Cant.</th><th class="text-right">Acciones</th></tr></thead>
+                        <tbody id="tbody-equipos">
+                            <!-- Mockup -->
+                            <tr><td class="font-medium text-brand-600">AIRE-001</td><td><div class="flex items-center"><div class="w-8 h-8 rounded bg-slate-50 flex items-center justify-center mr-3 text-slate-500 border border-slate-200"><i class="fa-solid fa-snowflake"></i></div><div><p class="font-bold text-slate-800">Aire Quirófano</p></div></div></td><td>Samsung</td><td>Piso 2</td><td><span class="px-2.5 py-1 bg-emerald-100 text-emerald-700 rounded-full text-xs font-bold">Operativo</span></td><td class="text-center font-bold">1</td><td class="text-right"><button onclick="document.getElementById('fallaEq').value='AIRE-001'; openModal('modalFalla')" class="text-amber-500 hover:text-amber-600 p-1 mr-1 transition-colors" title="Reportar Falla"><i class="fa-solid fa-triangle-exclamation"></i></button><button onclick="eliminarFila(this)" class="text-red-400 hover:text-red-600 p-1 ml-1 transition-colors"><i class="fa-solid fa-trash-can"></i></button></td></tr>
+                            <tr><td class="font-medium text-brand-600">ASC-001</td><td><div class="flex items-center"><div class="w-8 h-8 rounded bg-slate-50 flex items-center justify-center mr-3 text-slate-500 border border-slate-200"><i class="fa-solid fa-elevator"></i></div><div><p class="font-bold text-slate-800">Ascensor Principal</p></div></div></td><td>Otis</td><td>Torre A</td><td><span class="px-2.5 py-1 bg-amber-100 text-amber-700 rounded-full text-xs font-bold">En Mantenimiento</span></td><td class="text-center font-bold">1</td><td class="text-right"><button onclick="document.getElementById('fallaEq').value='ASC-001'; openModal('modalFalla')" class="text-amber-500 hover:text-amber-600 p-1 mr-1 transition-colors" title="Reportar Falla"><i class="fa-solid fa-triangle-exclamation"></i></button><button onclick="eliminarFila(this)" class="text-red-400 hover:text-red-600 p-1 ml-1 transition-colors"><i class="fa-solid fa-trash-can"></i></button></td></tr>
+                        </tbody>
+                    </table></div>
+                    <div class="px-6 py-4 border-t border-slate-200 flex flex-col sm:flex-row justify-between sm:items-center gap-4 bg-slate-50"><span class="text-sm font-bold text-slate-500">Mostrando resultados</span></div>
+                </div>
+            </div>
+            <!-- VIEW: PLANO TOPOGRÁFICO -->
+            <div id="view-plano" class="view-section overflow-hidden">
+                <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4 relative z-20">
+                    <div><h2 class="text-2xl font-bold text-slate-800">Plano Interactivo</h2><p class="text-slate-500 text-sm mt-1">Ubicación y estado en tiempo real de los equipos.</p></div>
+                    <div class="flex items-center gap-4">
+                        <button onclick="toggle3DMap()" id="btnToggle3D" class="btn-clicky px-4 py-2 bg-slate-800 text-white text-sm font-bold rounded-lg shadow-md hover:bg-slate-700 transition-colors flex items-center gap-2"><i class="fa-solid fa-cube"></i> Activar Vista 3D</button>
+                        <div class="flex gap-4 text-sm font-bold bg-white px-4 py-2 rounded-lg border border-slate-200 shadow-sm">
+                            <span class="flex items-center gap-2"><div class="w-3 h-3 rounded-full bg-brand-500 shadow-sm shadow-brand-500/50"></div> Operativo</span>
+                            <span class="flex items-center gap-2"><div class="w-3 h-3 rounded-full bg-red-500 animate-pulse shadow-sm shadow-red-500/50"></div> Falla / Alerta</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="w-full flex items-center justify-center p-8 perspective-container relative z-10" style="perspective: 1200px; height: 75vh;">
+                    <div id="planoContainer" class="plano-container relative w-full aspect-[16/9] max-w-6xl bg-white rounded-xl border border-slate-200 shadow-sm flex items-center justify-center transition-all duration-700 ease-in-out transform-gpu">
+                        <!-- Single Clean Floorplan Map -->
+                    <div id="hologram-levels" class="absolute inset-0 w-full h-full pointer-events-none transform-style-3d">
+                        <div class="hologram-level transform-style-3d absolute inset-0 w-full h-full transition-all duration-700">
+                            <svg class="w-full h-full opacity-100" preserveAspectRatio="none" viewBox="0 0 1200 800">
+                                <!-- Base Ground -->
+                                <rect width="1200" height="800" fill="#f8fafc" />
+                                
+                                <!-- Thick Outer Walls -->
+                                <rect x="20" y="20" width="1160" height="760" fill="none" stroke="#64748b" stroke-width="16" rx="8" />
+                                
+                                <!-- Rooms with inner walls -->
+                                <!-- Quirófanos -->
+                                <rect x="20" y="20" width="380" height="380" fill="#ffffff" stroke="#94a3b8" stroke-width="10"/>
+                                <!-- Laboratorio -->
+                                <rect x="400" y="20" width="400" height="280" fill="#ffffff" stroke="#94a3b8" stroke-width="10"/>
+                                <!-- Rayos X -->
+                                <rect x="800" y="20" width="380" height="280" fill="#ffffff" stroke="#94a3b8" stroke-width="10"/>
+                                <!-- Hospitalización -->
+                                <rect x="20" y="400" width="380" height="380" fill="#ffffff" stroke="#94a3b8" stroke-width="10"/>
+                                <!-- Recepción y Pasillo -->
+                                <rect x="400" y="300" width="400" height="480" fill="#f1f5f9" stroke="#94a3b8" stroke-width="10"/>
+                                <!-- Consultorios -->
+                                <rect x="800" y="300" width="380" height="250" fill="#ffffff" stroke="#94a3b8" stroke-width="10"/>
+                                <!-- Máquinas -->
+                                <rect x="800" y="550" width="380" height="230" fill="#e2e8f0" stroke="#94a3b8" stroke-width="10"/>
+
+                                <!-- Doors (Visual gaps) -->
+                                <rect x="380" y="160" width="40" height="60" fill="#f1f5f9" />
+                                <rect x="780" y="160" width="40" height="60" fill="#f1f5f9" />
+                                <rect x="380" y="560" width="40" height="60" fill="#f1f5f9" />
+                                <rect x="780" y="420" width="40" height="60" fill="#f1f5f9" />
+                                <rect x="780" y="660" width="40" height="60" fill="#e2e8f0" />
+
+                                <!-- Labels -->
+                                <text x="210" y="210" font-family="sans-serif" font-weight="bold" font-size="28" fill="#475569" text-anchor="middle">Quirófanos / UCI</text>
+                                <text x="600" y="160" font-family="sans-serif" font-weight="bold" font-size="28" fill="#475569" text-anchor="middle">Laboratorio</text>
+                                <text x="990" y="160" font-family="sans-serif" font-weight="bold" font-size="28" fill="#475569" text-anchor="middle">Rayos X</text>
+                                <text x="210" y="590" font-family="sans-serif" font-weight="bold" font-size="28" fill="#475569" text-anchor="middle">Hospitalización</text>
+                                <text x="600" y="540" font-family="sans-serif" font-weight="bold" font-size="32" fill="#334155" text-anchor="middle">Recepción / Pasillo Central</text>
+                                <text x="990" y="425" font-family="sans-serif" font-weight="bold" font-size="28" fill="#475569" text-anchor="middle">Consultorios</text>
+                                <text x="990" y="665" font-family="sans-serif" font-weight="bold" font-size="28" fill="#475569" text-anchor="middle">Sala de Máquinas</text>
+                            </svg>
+                        </div>
+                    </div>
+                    
+                    <!-- Pins Container -->
+                    <div id="map-pins-container" class="absolute inset-0 pointer-events-none transform-style-3d">
+                        <!-- Javascript will inject interactive absolute div pins here -->
+                    </div>
+                </div>
+                </div>
+            </div>
+
+            <!-- VIEW: MANTENIMIENTOS -->
+            <div id="view-mantenimientos" class="view-section">
+                <div class="flex flex-col sm:flex-row justify-between sm:items-center gap-4 mb-6">
+                    <h2 class="text-2xl font-bold text-slate-800">Gestión de Mantenimientos (OT)</h2>
+                    <button onclick="openModal('modalOrden')" class="px-4 py-2 bg-brand-600 text-white rounded-lg shadow-md hover:bg-brand-500 font-medium text-sm flex items-center transition-all btn-clicky"><i class="fa-solid fa-file-signature mr-2"></i> Nueva Orden</button>
+                </div>
+                <div class="flex border-b border-slate-200 mb-6">
+                    <button id="btn-tab-activos" onclick="switchOtTab('activos')" class="px-6 py-3 font-bold text-brand-600 border-b-2 border-brand-600 transition-colors">Activos</button>
+                    <button id="btn-tab-historial" onclick="switchOtTab('historial')" class="px-6 py-3 font-bold text-slate-500 border-b-2 border-transparent hover:text-slate-700 transition-colors">Historial Completado</button>
+                </div>
+                <!-- ACTIVOS -->
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6" id="lista-ordenes">
+                    <!-- JS fills this -->
+                </div>
+                <!-- HISTORIAL -->
+                <div class="hidden grid grid-cols-1 lg:grid-cols-2 gap-6" id="lista-historial">
+                    <!-- JS fills this -->
+                </div>
+            </div>
+
+            <!-- VIEW: REPUESTOS -->
+            <div id="view-repuestos" class="view-section">
+                <div class="flex flex-col sm:flex-row justify-between sm:items-center gap-4 mb-6">
+                    <h2 class="text-2xl font-bold text-slate-800">Inventario de Repuestos</h2>
+                    <button onclick="openModal('modalRepuesto')" class="px-4 py-2 bg-brand-600 text-white rounded-lg shadow-md hover:bg-brand-700 font-medium text-sm flex items-center transition-all btn-clicky"><i class="fa-solid fa-plus mr-2"></i> Ingresar Repuesto</button>
+                </div>
+                <div class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+                    <div class="p-4 border-b border-slate-200 flex flex-col sm:flex-row justify-between sm:items-center gap-4 bg-slate-50/50">
+                        <div class="relative w-full sm:w-64">
+                            <i class="fa-solid fa-search absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400"></i>
+                            <input type="text" id="filterRepSearch" oninput="filtrarRepuestos()" placeholder="Buscar repuesto..." class="w-full pl-10 pr-4 py-2 bg-white border border-slate-300 rounded-lg text-sm focus:border-brand-500 focus:ring-2 focus:ring-brand-100 outline-none transition-all shadow-sm">
+                        </div>
+                        <label class="flex items-center text-sm font-bold text-slate-600 cursor-pointer hover:text-slate-800 transition-colors">
+                            <input type="checkbox" id="filterRepStock" onchange="filtrarRepuestos()" class="mr-2 rounded border-slate-300 text-brand-600 focus:ring-brand-500 w-4 h-4">
+                            Mostrar solo stock bajo (<= 5)
+                        </label>
+                    </div>
+                    <div class="overflow-x-auto"><table class="w-full data-table text-left border-collapse">
+                        <thead><tr><th>Ref</th><th>Descripción</th><th>Categoría</th><th>Stock</th><th>Acciones</th></tr></thead>
+                        <tbody id="tbody-repuestos">
+                        </tbody>
+                    </table></div>
+                </div>
+            </div>
+
+            <!-- VIEW: TECNICOS -->
+            <div id="view-tecnicos" class="view-section">
+                <div class="flex flex-col sm:flex-row justify-between sm:items-center gap-4 mb-6">
+                    <h2 class="text-2xl font-bold text-slate-800">Personal Técnico</h2>
+                    <button onclick="openModal('modalTecnico')" class="px-4 py-2 bg-brand-600 text-white rounded-lg shadow-md hover:bg-brand-700 font-medium text-sm flex items-center transition-all btn-clicky"><i class="fa-solid fa-user-plus mr-2"></i> Nuevo Técnico</button>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6" id="tecnicos-grid">
+                    <div class="card-hover bg-white p-6 rounded-xl border border-slate-200 shadow-sm text-center relative group">
+                        <button onclick="eliminarFila(this)" class="absolute top-3 right-3 text-slate-300 hover:text-red-500 transition-colors opacity-0 group-hover:opacity-100"><i class="fa-solid fa-trash-can"></i></button>
+                        <img src="https://ui-avatars.com/api/?name=Carlos+M&background=0284c7&color=fff" class="w-20 h-20 rounded-full mx-auto mb-3 shadow-md border-2 border-white">
+                        <h3 class="font-bold text-lg text-slate-800">Carlos M.</h3>
+                        <p class="text-sm font-bold text-brand-600 mb-3">Electricista</p>
+                        <div class="flex flex-col items-center gap-1 text-xs text-slate-500 bg-slate-50 p-2 rounded-lg border border-slate-100">
+                            <span><i class="fa-solid fa-phone mr-1"></i> 0414-1234567</span>
+                            <span><i class="fa-solid fa-envelope mr-1"></i> carlos@clinica.com</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- VIEW: PROVEEDORES -->
+            <div id="view-proveedores" class="view-section">
+                <div class="flex flex-col sm:flex-row justify-between sm:items-center gap-4 mb-6">
+                    <h2 class="text-2xl font-bold text-slate-800">Proveedores</h2>
+                    <button onclick="openModal('modalProveedor')" class="px-4 py-2 bg-brand-600 text-white rounded-lg shadow-md hover:bg-brand-700 font-medium text-sm flex items-center transition-all btn-clicky"><i class="fa-solid fa-plus mr-2"></i> Añadir Empresa</button>
+                </div>
+                <div class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+                    <div class="overflow-x-auto"><table class="w-full data-table text-left">
+                        <thead><tr><th>Empresa</th><th>Servicio</th><th>Contacto</th><th>Acciones</th></tr></thead>
+                        <tbody id="tbody-proveedores">
+                            <tr>
+                                <td class="font-bold text-brand-700">Ascensores Global</td>
+                                <td class="font-medium text-slate-700">Mtto Ascensores</td>
+                                <td><div class="text-sm"><i class="fa-solid fa-phone text-slate-400 mr-1"></i> 0212-5551234<br><span class="text-xs text-slate-500"><i class="fa-solid fa-envelope mr-1"></i> contacto@ascglobal.com</span></div></td>
+                                <td><button onclick="eliminarFila(this)" class="text-slate-400 hover:text-red-500 transition-colors"><i class="fa-solid fa-trash-can"></i></button></td>
+                            </tr>
+                        </tbody>
+                    </table></div>
+                </div>
+            </div>
+
+        </main>
+    </div>
+
+    <!-- MODALS -->
+    <div id="modalBackdrop" class="fixed inset-0 bg-slate-900/60 z-50 modal items-center justify-center p-4">
+        
+        <datalist id="listaMarcas"><option value="Samsung"><option value="LG"><option value="Carrier"><option value="Otis"><option value="Caterpillar"></datalist>
+        <datalist id="listaEquiposDisponibles"></datalist>
+
+        <!-- EQUIPO -->
+        <div id="modalEquipo" class="modal-content bg-white rounded-xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto hidden flex-col">
+            <div class="p-5 border-b flex justify-between"><h3 class="text-xl font-bold">Registrar Equipo</h3><button onclick="closeModals()"><i class="fa-solid fa-xmark"></i></button></div>
+            <form class="p-6 space-y-4" onsubmit="guardarEquipo(event)">
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4"><div><label class="block text-sm font-medium text-slate-700">Nombre *</label><input type="text" id="eqNombre" placeholder="Ej. Aire Split 12000 BTU" required class="w-full px-3 py-2 border rounded-lg"></div><div><label class="block text-sm font-medium text-slate-700">Código ID *</label><input type="text" id="eqCodigo" placeholder="Ej. AIRE-005" required class="w-full px-3 py-2 border rounded-lg"></div></div>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4"><div><label class="block text-sm font-medium text-slate-700">Tipo *</label><select id="eqTipo" required class="w-full px-3 py-2 border rounded-lg"><option value="">Seleccione...</option><option>Aire Acondicionado</option><option>Ascensor</option><option>Planta Eléctrica</option></select></div><div><label class="block text-sm font-medium text-slate-700">Ubicación *</label><input type="text" id="eqUbicacion" placeholder="Ej. Piso 1 - Quirófano" required class="w-full px-3 py-2 border rounded-lg"></div></div>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4"><div><label class="block text-sm font-medium text-slate-700">Marca *</label><input type="text" id="eqMarca" list="listaMarcas" placeholder="Ej. Samsung" required class="w-full px-3 py-2 border rounded-lg"></div><div><label class="block text-sm font-medium text-slate-700">Cantidad *</label><input type="number" id="eqCant" placeholder="Ej. 1" value="1" min="1" required class="w-full px-3 py-2 border rounded-lg"></div></div>
+
+                <div class="text-right mt-4"><button type="button" onclick="closeModals()" class="px-4 py-2 border rounded-lg mr-2">Cancelar</button><button type="submit" class="px-4 py-2 bg-brand-600 text-white rounded-lg">Guardar BD</button></div>
+            </form>
+        </div>
+
+        <!-- REPUESTO -->
+        <div id="modalRepuesto" class="modal-content bg-white rounded-xl shadow-2xl w-full max-w-lg hidden flex-col">
+            <div class="p-5 border-b flex justify-between"><h3 class="text-xl font-bold">Añadir Repuesto</h3><button onclick="closeModals()"><i class="fa-solid fa-xmark"></i></button></div>
+            <form class="p-6 space-y-4" onsubmit="guardarRepuesto(event)">
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4"><div><label class="block text-sm font-medium text-slate-700">Ref *</label><input type="text" id="repRef" placeholder="Ej. FIL-001" required class="w-full px-3 py-2 border rounded-lg"></div><div><label class="block text-sm font-medium text-slate-700">Stock *</label><input type="number" id="repStock" placeholder="Ej. 10" required class="w-full px-3 py-2 border rounded-lg"></div></div>
+                <div><label class="block text-sm font-medium text-slate-700">Descripción *</label><input type="text" id="repDesc" placeholder="Ej. Filtro de aire HEPA" required class="w-full px-3 py-2 border rounded-lg"></div>
+                <div><label class="block text-sm font-medium text-slate-700">Categoría *</label><select id="repCat" required class="w-full px-3 py-2 border rounded-lg"><option value="">Seleccione...</option><option>Climatización</option><option>Eléctrico</option></select></div>
+                <div class="text-right mt-4"><button type="button" onclick="closeModals()" class="px-4 py-2 border rounded-lg mr-2">Cancelar</button><button type="submit" class="px-4 py-2 bg-brand-600 text-white rounded-lg">Guardar BD</button></div>
+            </form>
+        </div>
+
+        <!-- TÉCNICO -->
+        <div id="modalTecnico" class="modal-content bg-white rounded-xl shadow-2xl w-full max-w-md hidden flex-col">
+            <div class="p-5 border-b flex justify-between bg-slate-50 rounded-t-xl"><h3 class="text-xl font-bold text-slate-800">Añadir Técnico</h3><button type="button" onclick="closeModals()" class="text-slate-400 hover:text-slate-600"><i class="fa-solid fa-xmark"></i></button></div>
+            <form class="p-5 space-y-4" onsubmit="guardarTecnico(event)">
+                <div><label class="block text-sm font-medium text-slate-700">Nombre Completo *</label><input type="text" id="tecNombre" placeholder="Ej. Carlos Martínez" required class="w-full px-3 py-2 border border-slate-300 rounded-lg"></div>
+                <div><label class="block text-sm font-medium text-slate-700">Especialidad *</label><input type="text" id="tecEspec" placeholder="Ej. Refrigeración / Eléctrico" required class="w-full px-3 py-2 border border-slate-300 rounded-lg"></div>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4"><div><label class="block text-sm font-medium text-slate-700">Teléfono</label><input type="text" id="tecTel" placeholder="Ej. 0414-1234567" class="w-full px-3 py-2 border border-slate-300 rounded-lg"></div><div><label class="block text-sm font-medium text-slate-700">Correo</label><input type="email" id="tecCorreo" placeholder="Ej. carlos@clinica.com" class="w-full px-3 py-2 border border-slate-300 rounded-lg"></div></div>
+                <div class="text-right mt-4"><button type="submit" class="btn-clicky px-4 py-2 bg-gradient-to-r from-brand-600 to-brand-500 text-white rounded-lg hover:shadow-lg">Añadir BD</button></div>
+            </form>
+        </div>
+
+        <!-- PROVEEDOR -->
+        <div id="modalProveedor" class="modal-content bg-white rounded-xl shadow-2xl w-full max-w-md hidden flex-col">
+            <div class="p-5 border-b flex justify-between bg-slate-50 rounded-t-xl"><h3 class="text-xl font-bold text-slate-800">Añadir Empresa</h3><button type="button" onclick="closeModals()" class="text-slate-400 hover:text-slate-600"><i class="fa-solid fa-xmark"></i></button></div>
+            <form class="p-5 space-y-4" onsubmit="guardarProveedor(event)">
+                <div><label class="block text-sm font-medium text-slate-700">Empresa *</label><input type="text" id="provEmpresa" placeholder="Ej. Ascensores Global" required class="w-full px-3 py-2 border border-slate-300 rounded-lg"></div>
+                <div><label class="block text-sm font-medium text-slate-700">Servicio *</label><input type="text" id="provServicio" placeholder="Ej. Mtto Ascensores" required class="w-full px-3 py-2 border border-slate-300 rounded-lg"></div>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4"><div><label class="block text-sm font-medium text-slate-700">Teléfono</label><input type="text" id="provTel" placeholder="Ej. 0212-5551234" class="w-full px-3 py-2 border border-slate-300 rounded-lg"></div><div><label class="block text-sm font-medium text-slate-700">Correo</label><input type="email" id="provCorreo" placeholder="Ej. contacto@ascglobal.com" class="w-full px-3 py-2 border border-slate-300 rounded-lg"></div></div>
+                <div class="text-right mt-4"><button type="submit" class="btn-clicky px-4 py-2 bg-gradient-to-r from-brand-600 to-brand-500 text-white rounded-lg hover:shadow-lg">Guardar BD</button></div>
+            </form>
+        </div>
+
+        <!-- NUEVA ORDEN (OT) -->
+        <div id="modalOrden" class="modal-content bg-white rounded-xl shadow-2xl w-full max-w-md hidden flex-col">
+            <div class="p-5 border-b flex justify-between bg-slate-50 rounded-t-xl"><h3 class="text-xl font-bold text-slate-800">Crear OT</h3><button type="button" onclick="closeModals()" class="text-slate-400 hover:text-slate-600"><i class="fa-solid fa-xmark"></i></button></div>
+            <form class="p-5 space-y-4" onsubmit="guardarOrden(event)">
+                <div class="flex gap-4"><label class="flex-1 border border-slate-300 rounded-lg p-3 cursor-pointer hover:bg-slate-50 transition-colors"><input type="radio" name="otTipo" value="Preventivo" required class="mr-2 text-brand-600"> <span class="text-slate-700 font-medium text-sm">Preventivo</span></label><label class="flex-1 border border-slate-300 rounded-lg p-3 cursor-pointer hover:bg-slate-50 transition-colors"><input type="radio" name="otTipo" value="Correctivo" required class="mr-2 text-brand-600"> <span class="text-slate-700 font-medium text-sm">Correctivo</span></label></div>
+                <div><label class="block text-sm font-medium text-slate-700">Equipo / Ref *</label><input type="text" id="otEquipo" list="listaEquiposDisponibles" placeholder="Ej. Escribe o selecciona de la lista" required class="w-full px-3 py-2 border border-slate-300 rounded-lg"></div>
+                <div><label class="block text-sm font-medium text-slate-700">Descripción de la tarea *</label><textarea id="otDesc" placeholder="Ej. Cambio de aceite y filtros" required rows="2" class="w-full px-3 py-2 border border-slate-300 rounded-lg resize-none"></textarea></div>
+                <div><label class="block text-sm font-medium text-slate-700">Asignar a (Técnico/Empresa)</label><input type="text" id="otAsignado" placeholder="Ej. Carlos M." class="w-full px-3 py-2 border border-slate-300 rounded-lg"></div>
+                <div class="text-right mt-4"><button type="submit" class="btn-clicky px-4 py-2 bg-gradient-to-r from-brand-600 to-brand-500 text-white rounded-lg hover:shadow-lg">Generar OT en BD</button></div>
+            </form>
+        </div>
+
+        <!-- GESTIONAR OT -->
+        <div id="modalGestionarOT" class="modal-content bg-white rounded-xl shadow-2xl w-full max-w-sm hidden flex-col">
+            <div class="p-5 border-b flex justify-between bg-slate-50 rounded-t-xl"><h3 class="text-xl font-bold text-slate-800">Actualizar OT</h3><button type="button" onclick="closeModals()" class="text-slate-400 hover:text-slate-600"><i class="fa-solid fa-xmark"></i></button></div>
+            <form class="p-5 space-y-4" onsubmit="actualizarEstadoOT(event)">
+                <input type="hidden" id="gestionOtId">
+                <input type="hidden" id="gestionOtEq">
+                <div><label class="block text-sm font-medium text-slate-700">Nuevo Estado *</label><select id="gestionOtEstado" class="w-full px-3 py-2 border border-slate-300 rounded-lg"><option>Pendiente</option><option>En Progreso</option><option>Completado</option></select></div>
+                <div class="text-right mt-4"><button type="submit" class="btn-clicky px-4 py-2 bg-gradient-to-r from-brand-600 to-brand-500 text-white rounded-lg hover:shadow-lg">Actualizar BD</button></div>
+            </form>
+        </div>
+
+        <!-- FALLA -->
+        <div id="modalFalla" class="modal-content bg-white rounded-xl shadow-2xl w-full max-w-md hidden flex-col border-t-4 border-t-red-500">
+            <div class="p-5 border-b flex justify-between bg-red-50 rounded-t-xl"><h3 class="text-xl font-bold text-red-700">Reportar Falla</h3><button type="button" onclick="closeModals()" class="text-red-400 hover:text-red-600"><i class="fa-solid fa-xmark"></i></button></div>
+            <form class="p-5 space-y-4" onsubmit="reportarFalla(event)">
+                <div><label class="block text-sm font-medium text-slate-700">Equipo afectado *</label><input type="text" id="fallaEq" list="listaEquiposDisponibles" required placeholder="Ej. Escribe o selecciona..." class="w-full px-3 py-2 border border-slate-300 rounded-lg bg-slate-50"></div>
+                <div><label class="block text-sm font-medium text-slate-700">Descripción del problema *</label><textarea id="fallaDesc" required rows="3" placeholder="Ej. El equipo hace ruido y no enciende" class="w-full px-3 py-2 border border-slate-300 rounded-lg resize-none"></textarea></div>
+                <div class="text-right mt-4"><button type="submit" class="w-full btn-clicky py-2.5 bg-red-600 text-white rounded-lg font-bold hover:bg-red-700 shadow-md hover:shadow-lg transition-all">Generar Alerta BD</button></div>
+            </form>
+        </div>
+
+        <!-- EDITAR REPUESTO -->
+        <div id="modalEditarRepuesto" class="modal-content bg-white rounded-xl shadow-2xl w-full max-w-md hidden flex-col">
+            <div class="p-5 border-b flex justify-between bg-slate-50 rounded-t-xl"><h3 class="text-xl font-bold text-slate-800">Editar Repuesto</h3><button type="button" onclick="closeModals()" class="text-slate-400 hover:text-slate-600"><i class="fa-solid fa-xmark"></i></button></div>
+            <form class="p-5 space-y-4" onsubmit="guardarEdicionRepuesto(event)">
+                <input type="hidden" id="editRepId">
+                <div><label class="block text-sm font-medium text-slate-700">Stock Actualizado *</label><input type="number" id="editRepStock" required class="w-full px-3 py-2 border border-slate-300 rounded-lg"></div>
+                <div><label class="block text-sm font-medium text-slate-700">Descripción *</label><input type="text" id="editRepDesc" required class="w-full px-3 py-2 border border-slate-300 rounded-lg"></div>
+                <div class="text-right mt-4"><button type="submit" class="btn-clicky px-4 py-2 bg-gradient-to-r from-brand-600 to-brand-500 text-white rounded-lg hover:shadow-lg">Actualizar BD</button></div>
+            </form>
+        </div>
+
+        <!-- DETALLES EQUIPO -->
+        <div id="modalDetalleEquipo" class="modal-content bg-white rounded-xl shadow-2xl w-full max-w-lg hidden flex-col">
+            <div class="p-5 border-b flex justify-between bg-slate-50 rounded-t-xl"><h3 class="text-xl font-bold text-slate-800">Detalles del Equipo</h3><button type="button" onclick="closeModals()" class="text-slate-400 hover:text-slate-600"><i class="fa-solid fa-xmark"></i></button></div>
+            <div class="p-5 space-y-4">
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div><p class="text-xs text-slate-500 font-bold uppercase">Código</p><p id="detEqCod" class="font-bold text-brand-700"></p></div>
+                    <div><p class="text-xs text-slate-500 font-bold uppercase">Estado</p><p id="detEqEst"></p></div>
+                    <div class="col-span-2"><p class="text-xs text-slate-500 font-bold uppercase">Nombre</p><p id="detEqNom" class="font-bold text-slate-800 text-lg"></p></div>
+                    <div><p class="text-xs text-slate-500 font-bold uppercase">Tipo</p><p id="detEqTip" class="font-medium text-slate-700"></p></div>
+                    <div><p class="text-xs text-slate-500 font-bold uppercase">Marca</p><p id="detEqMar" class="font-medium text-slate-700"></p></div>
+                    <div class="col-span-2"><p class="text-xs text-slate-500 font-bold uppercase">Ubicación</p><p id="detEqUbi" class="font-medium text-slate-700"></p></div>
+                    <div class="col-span-2"><p class="text-xs text-slate-500 font-bold uppercase">Stock / Cantidad</p><p id="detEqCant" class="font-bold text-slate-700"></p></div>
+                </div>
+            </div>
+            <div class="p-4 border-t bg-slate-50 rounded-b-xl flex justify-end gap-2">
+                <button onclick="closeModals()" class="px-4 py-2 bg-white border border-slate-300 text-slate-700 rounded-lg shadow-sm hover:bg-slate-50 font-bold">Cerrar</button>
+            </div>
+        </div>
+        
+        <!-- CONFIRMACIÓN CUSTOM -->
+        <div id="modalConfirmacion" class="modal-content bg-white rounded-xl shadow-2xl w-full max-w-sm hidden flex-col border-t-4 border-t-red-500 z-50">
+            <div class="p-6 text-center">
+                <div class="w-16 h-16 bg-red-100 text-red-500 rounded-full mx-auto flex items-center justify-center text-3xl mb-4"><i class="fa-solid fa-triangle-exclamation"></i></div>
+                <h3 class="text-xl font-bold text-slate-800 mb-2">¿Estás seguro?</h3>
+                <p id="confirmMsg" class="text-slate-600 mb-6"></p>
+                <div class="flex gap-3 justify-center">
+                    <button onclick="closeModals()" class="px-4 py-2 bg-slate-100 text-slate-700 rounded-lg hover:bg-slate-200 font-bold">Cancelar</button>
+                    <button id="btnConfirmAccion" class="px-4 py-2 bg-red-500 text-white rounded-lg shadow-md hover:bg-red-600 font-bold">Sí, proceder</button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- DETALLES REPUESTO -->
+        <div id="modalDetalleRepuesto" class="modal-content bg-white rounded-xl shadow-2xl w-full max-w-lg hidden flex-col">
+            <div class="p-5 border-b flex justify-between bg-slate-50 rounded-t-xl"><h3 class="text-xl font-bold text-slate-800">Detalles del Repuesto</h3><button type="button" onclick="closeModals()" class="text-slate-400 hover:text-slate-600"><i class="fa-solid fa-xmark"></i></button></div>
+            <div class="p-5 space-y-4">
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div><p class="text-xs text-slate-500 font-bold uppercase">Referencia</p><p id="detRepCod" class="font-bold text-brand-700"></p></div>
+                    <div><p class="text-xs text-slate-500 font-bold uppercase">Stock Disponible</p><p id="detRepStock" class="font-bold text-slate-800 text-lg"></p></div>
+                    <div class="col-span-2"><p class="text-xs text-slate-500 font-bold uppercase">Descripción</p><p id="detRepDesc" class="font-bold text-slate-800 text-lg"></p></div>
+                    <div class="col-span-2"><p class="text-xs text-slate-500 font-bold uppercase">Categoría</p><p id="detRepCat" class="font-medium text-slate-700"></p></div>
+                </div>
+            </div>
+            <div class="p-4 border-t bg-slate-50 rounded-b-xl flex justify-end gap-2">
+                <button onclick="closeModals()" class="px-4 py-2 bg-white border border-slate-300 text-slate-700 rounded-lg shadow-sm hover:bg-slate-50 font-bold">Cerrar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- TOAST REMOVED -->
+    <script>
+        const baseUrl = 'http://localhost:3000';
+
+        function toggleMobileMenu() {
+            const sidebar = document.getElementById('sidebar');
+            const overlay = document.getElementById('mobileOverlay');
+            sidebar.classList.toggle('-translate-x-full');
+            overlay.classList.toggle('hidden');
+        }
+
+        // Navegación
+        function switchView(targetId) {
+            document.querySelectorAll('.view-section').forEach(el => el.classList.remove('active'));
+            document.querySelectorAll('.nav-btn').forEach(btn => { 
+                btn.classList.remove('bg-brand-50', 'text-brand-700', 'font-bold'); 
+                btn.classList.add('text-slate-600', 'hover:bg-slate-50', 'hover:text-brand-600', 'font-medium'); 
+            });
+            const v = document.getElementById('view-' + targetId); if(v) v.classList.add('active');
+            const b = document.querySelector(`.nav-btn[data-target="${targetId}"]`); 
+            if(b) {
+                b.classList.add('bg-brand-50', 'text-brand-700', 'font-bold');
+                b.classList.remove('text-slate-600', 'hover:bg-slate-50', 'hover:text-brand-600', 'font-medium');
+            }
+            
+            // Cargar datos BD al cambiar de pestaña
+            if(targetId==='equipos') cargarEquipos();
+            if(targetId==='plano') cargarEquipos();
+            if(targetId==='repuestos') cargarRepuestos();
+            if(targetId==='tecnicos') cargarTecnicos();
+            if(targetId==='proveedores') cargarProveedores();
+            if(targetId==='mantenimientos') cargarOrdenes();
+
+            // Cerrar menú en móviles
+            if(window.innerWidth < 768) {
+                const sidebar = document.getElementById('sidebar');
+                if(sidebar && !sidebar.classList.contains('-translate-x-full')) {
+                    toggleMobileMenu();
+                }
+            }
+        }
+        document.querySelectorAll('.nav-btn').forEach(b => b.addEventListener('click', e => switchView(e.currentTarget.getAttribute('data-target'))));
+
+        // Notificaciones
+        let notifOpen = false;
+        function toggleNotifs() {
+            const nd = document.getElementById('notifDropdown');
+            notifOpen = !notifOpen;
+            if(notifOpen) { nd.classList.add('show'); actualizarNotificaciones(); }
+            else nd.classList.remove('show');
+        }
+        
+        async function actualizarNotificaciones() {
+            try {
+                const ordenes = await req('/api/ordenes', 'GET');
+                const repuestos = await req('/api/repuestos', 'GET');
+                
+                const notifs = [];
+                ordenes.filter(o => o.estado !== 'Completado').forEach(o => {
+                    let icon = '<i class="fa-solid fa-wrench text-amber-500"></i>';
+                    let bg = 'bg-amber-50';
+                    if(o.tipo.toLowerCase().includes('correctivo')) { icon = '<i class="fa-solid fa-triangle-exclamation text-red-500"></i>'; bg = 'bg-red-50'; }
+                    notifs.push({ html: `<div onclick="switchView('mantenimientos'); toggleNotifs()" class="p-3 hover:bg-slate-50 cursor-pointer rounded-lg border border-transparent hover:border-slate-100 flex gap-3 transition-colors"><div class="w-8 h-8 rounded-full ${bg} flex items-center justify-center shrink-0 mt-0.5">${icon}</div><div><p class="text-sm font-bold text-slate-800 line-clamp-1">${o.descripcion}</p><p class="text-xs text-slate-500 mt-1">${o.codigo} • ${o.estado}</p></div></div>` });
+                });
+                
+                repuestos.filter(r => parseInt(r.stock) <= 5).forEach(r => {
+                    notifs.push({ html: `<div onclick="switchView('repuestos'); toggleNotifs()" class="p-3 hover:bg-slate-50 cursor-pointer rounded-lg border border-transparent hover:border-slate-100 flex gap-3 transition-colors"><div class="w-8 h-8 rounded-full bg-orange-50 flex items-center justify-center shrink-0 mt-0.5"><i class="fa-solid fa-box-open text-orange-500"></i></div><div><p class="text-sm font-bold text-slate-800 line-clamp-1">Stock Bajo: ${r.descripcion}</p><p class="text-xs text-slate-500 mt-1">Quedan ${r.stock} un. • ${r.codigo}</p></div></div>` });
+                });
+
+                const list = document.getElementById('notifList');
+                if(notifs.length === 0) {
+                    list.innerHTML = `<div class="p-4 text-center text-slate-500 text-sm">No hay notificaciones nuevas</div>`;
+                    document.getElementById('notifBadge').classList.add('hidden');
+                    document.getElementById('notifCount').innerText = '0';
+                } else {
+                    list.innerHTML = notifs.map(n => n.html).join('');
+                    document.getElementById('notifBadge').classList.remove('hidden');
+                    document.getElementById('notifCount').innerText = notifs.length;
+                }
+            } catch(e) {}
+        }
+        
+        // Dark Mode
+        function toggleDarkMode() {
+            document.body.classList.toggle('dark');
+            const isDark = document.body.classList.contains('dark');
+            localStorage.setItem('theme', isDark ? 'dark' : 'light');
+            document.getElementById('darkModeIcon').className = isDark ? 'fa-solid fa-sun text-amber-500' : 'fa-solid fa-moon';
+        }
+        
+        // 3D Map
+        function toggle3DMap() {
+            const container = document.getElementById('planoContainer');
+            const btn = document.getElementById('btnToggle3D');
+            container.classList.toggle('is-3d');
+            if(container.classList.contains('is-3d')) {
+                btn.innerHTML = '<i class="fa-solid fa-map"></i> Vista 2D';
+                btn.classList.add('bg-brand-600');
+                btn.classList.remove('bg-slate-800');
+            } else {
+                btn.innerHTML = '<i class="fa-solid fa-cube"></i> Activar Vista 3D';
+                btn.classList.add('bg-slate-800');
+                btn.classList.remove('bg-brand-600');
+            }
+        }
+        
+        // Inicializar tema
+        if (localStorage.getItem('theme') === 'dark') {
+            document.body.classList.add('dark');
+            // Como el script corre antes de que cargue el DOM en algunos casos, esto también se verifica en window.onload o acá si es abajo.
+            document.addEventListener('DOMContentLoaded', () => {
+                const icon = document.getElementById('darkModeIcon');
+                if(icon) icon.className = 'fa-solid fa-sun text-amber-500';
+            });
+        }
+        
+        // Buscador Global
+        function handleGlobalSearch(e) {
+            const q = e.target.value.toLowerCase().trim();
+            const resDiv = document.getElementById('globalSearchResults');
+            if(q.length < 2) { resDiv.classList.add('hidden'); return; }
+            
+            let html = '';
+            let matches = 0;
+
+            const secciones = [
+                {id: 'dashboard', name: 'Dashboard General', icon: 'fa-chart-pie'},
+                {id: 'plano', name: 'Plano Interactivo', icon: 'fa-map-location-dot'},
+                {id: 'equipos', name: 'Gestión de Equipos', icon: 'fa-server'},
+                {id: 'mantenimientos', name: 'Órdenes de Mantenimiento', icon: 'fa-screwdriver-wrench'},
+                {id: 'repuestos', name: 'Inventario de Repuestos', icon: 'fa-boxes-stacked'},
+                {id: 'tecnicos', name: 'Personal Técnico', icon: 'fa-users-gear'},
+                {id: 'proveedores', name: 'Proveedores', icon: 'fa-truck-field'}
+            ];
+            
+            secciones.forEach(s => {
+                if(s.name.toLowerCase().includes(q) || s.id.toLowerCase().includes(q)) {
+                    html += `<div onclick="switchView('${s.id}'); document.getElementById('globalSearchInput').value=''; document.getElementById('globalSearchResults').classList.add('hidden');" class="px-4 py-3 hover:bg-slate-50 cursor-pointer border-b border-slate-100 flex items-center gap-3"><div class="w-8 h-8 rounded bg-brand-50 text-brand-600 flex items-center justify-center shrink-0"><i class="fa-solid ${s.icon}"></i></div><div><p class="text-sm font-bold text-slate-800">Ir a ${s.name}</p><p class="text-xs text-slate-500">Sección del sistema</p></div></div>`;
+                    matches++;
+                }
+            });
+
+            // Equipos
+            if(typeof equiposList !== 'undefined') {
+                equiposList.forEach(eq => {
+                    if(eq.nombre.toLowerCase().includes(q) || eq.codigo.toLowerCase().includes(q) || eq.tipo.toLowerCase().includes(q)) {
+                        html += `<div onclick="switchView('equipos'); abrirDetalleEquipo(${eq.id}); document.getElementById('globalSearchInput').value=''; document.getElementById('globalSearchResults').classList.add('hidden');" class="px-4 py-3 hover:bg-slate-50 cursor-pointer border-b border-slate-100 flex items-center gap-3"><div class="w-8 h-8 rounded bg-slate-100 text-slate-500 flex items-center justify-center shrink-0"><i class="fa-solid fa-server"></i></div><div><p class="text-sm font-bold text-slate-800">${eq.nombre}</p><p class="text-xs text-brand-600">Equipo • ${eq.codigo}</p></div></div>`;
+                        matches++;
+                    }
+                });
+            }
+
+            // Repuestos
+            if(typeof repuestosList !== 'undefined') {
+                repuestosList.forEach(rp => {
+                    if(rp.descripcion.toLowerCase().includes(q) || rp.codigo.toLowerCase().includes(q) || rp.categoria.toLowerCase().includes(q)) {
+                        html += `<div onclick="switchView('repuestos'); abrirDetalleRepuesto(${rp.id}); document.getElementById('globalSearchInput').value=''; document.getElementById('globalSearchResults').classList.add('hidden');" class="px-4 py-3 hover:bg-slate-50 cursor-pointer border-b border-slate-100 flex items-center gap-3"><div class="w-8 h-8 rounded bg-slate-100 text-slate-500 flex items-center justify-center shrink-0"><i class="fa-solid fa-box-open"></i></div><div><p class="text-sm font-bold text-slate-800">${rp.descripcion}</p><p class="text-xs text-emerald-600">Repuesto • ${rp.codigo}</p></div></div>`;
+                        matches++;
+                    }
+                });
+            }
+
+            if(matches === 0) {
+                html = `<div class="p-4 text-center text-slate-500 text-sm">No se encontraron resultados para "${q}"</div>`;
+            }
+            resDiv.innerHTML = html;
+            resDiv.classList.remove('hidden');
+        }
+
+        // Clic fuera del buscador o notif
+        document.addEventListener('click', (e) => {
+            const nd = document.getElementById('notifDropdown');
+            if(notifOpen && !e.target.closest('#notifDropdown') && !e.target.closest('button[onclick="toggleNotifs()"]')) {
+                toggleNotifs();
+            }
+            
+            const searchRes = document.getElementById('globalSearchResults');
+            if(!e.target.closest('.group') && searchRes) {
+                searchRes.classList.add('hidden');
+            }
+        });
+
+        // Modales
+        const bd = document.getElementById('modalBackdrop');
+        function openModal(id) { 
+            document.querySelectorAll('.modal-content').forEach(m => { m.classList.add('hidden'); m.classList.remove('flex'); }); 
+            bd.classList.add('show'); 
+            document.getElementById(id).classList.remove('hidden'); 
+            document.getElementById(id).classList.add('flex'); 
+        }
+        function closeModals() { 
+            bd.classList.remove('show'); 
+            setTimeout(() => document.querySelectorAll('.modal-content').forEach(m => { m.classList.add('hidden'); m.classList.remove('flex');}), 200); 
+        }
+        bd.addEventListener('click', e => { if(e.target === bd) closeModals(); });
+        
+        function showToast(msg, isError = false) { 
+            alert(msg);
+        }
+
+        // --- Custom Confirm Modal ---
+        let accionConfirmada = null;
+        function abrirConfirmacion(msg, callback) {
+            document.getElementById('confirmMsg').innerText = msg;
+            accionConfirmada = callback;
+            openModal('modalConfirmacion');
+        }
+        document.getElementById('btnConfirmAccion').addEventListener('click', () => {
+            if(accionConfirmada) accionConfirmada();
+            closeModals();
+        });
+
+        function eliminarFila(btn) { 
+            abrirConfirmacion('¿Estás seguro de que deseas eliminar este registro visualmente?', () => {
+                btn.closest('tr').remove();
+            }); 
+        }
+
+        // --- FILTROS (Equipos y Repuestos) ---
+        function filtrarEquipos() {
+            const search = document.getElementById('filterEqSearch').value.toLowerCase();
+            const tipo = document.getElementById('filterEqTipo').value.toLowerCase();
+            const estado = document.getElementById('filterEqEstado').value.toLowerCase();
+            const filas = document.querySelectorAll('#tbody-equipos tr');
+            
+            filas.forEach(fila => {
+                const texto = fila.innerText.toLowerCase();
+                const matchSearch = texto.includes(search);
+                const matchTipo = tipo === '' || texto.includes(tipo);
+                const matchEstado = estado === '' || texto.includes(estado);
+                
+                if (matchSearch && matchTipo && matchEstado) {
+                    fila.style.display = '';
+                } else {
+                    fila.style.display = 'none';
+                }
+            });
+        }
+
+        function filtrarRepuestos() {
+            const search = document.getElementById('filterRepSearch').value.toLowerCase();
+            const stockBajo = document.getElementById('filterRepStock').checked;
+            const filas = document.querySelectorAll('#tbody-repuestos tr');
+            
+            filas.forEach(fila => {
+                const texto = fila.innerText.toLowerCase();
+                const matchSearch = texto.includes(search);
+                
+                let matchStock = true;
+                if (stockBajo) {
+                    // Extraer el número de stock de la celda correspondiente (la penúltima celda)
+                    const stockCell = fila.querySelector('td:nth-child(5)');
+                    if (stockCell) {
+                        const stockVal = parseInt(stockCell.innerText);
+                        if (!isNaN(stockVal) && stockVal > 5) {
+                            matchStock = false;
+                        }
+                    }
+                }
+                
+                if (matchSearch && matchStock) {
+                    fila.style.display = '';
+                } else {
+                    fila.style.display = 'none';
+                }
+            });
+        }
+
+        // --- AUTHENTICATION LOGIC ---
+        async function initAuth() {
+            const token = localStorage.getItem('token');
+            if(token) {
+                // Cargar datos de la app
+                await Promise.all([cargarEquipos(), cargarRepuestos(), cargarTecnicos(), cargarProveedores(), cargarOrdenes()]);
+                actualizarNotificaciones();
+                
+                // Ocultar Loader
+                const loader = document.getElementById('globalLoader');
+                loader.classList.add('opacity-0');
+                setTimeout(() => loader.classList.add('hidden'), 500);
+            } else {
+                logout();
+            }
+        }
+        
+        function logout() {
+            localStorage.removeItem('token');
+            window.location.href = '/login.html';
+        }
+
+        // --- FETCH API ---
+        async function req(url, method, body, isFormData=false) {
+            const opts = { method, headers: {} };
+            const token = localStorage.getItem('token');
+            if(token) opts.headers['Authorization'] = `Bearer ${token}`;
+            
+            if(body) { 
+                opts.body = isFormData ? body : JSON.stringify(body); 
+                if(!isFormData) opts.headers['Content-Type'] = 'application/json'; 
+            }
+            const res = await fetch(baseUrl + url, opts);
+            
+            if(res.status === 401 || res.status === 403) {
+                showToast('Sesión expirada o inválida', true);
+                logout();
+                throw new Error('Unauthorized');
+            }
+            
+            return await res.json();
+        }
+
+        // Equipos
+        let equiposList = [];
+        async function cargarEquipos() {
+            equiposList = await req('/api/equipos', 'GET');
+            document.querySelectorAll('.db-eq').forEach(e => e.remove());
+            document.getElementById('dash-eq').innerText = 142 + equiposList.length;
+            
+            // Populate datalist para Mantenimiento
+            const dl = document.getElementById('listaEquiposDisponibles');
+            if (dl) dl.innerHTML = '';
+
+            equiposList.forEach(eq => {
+                if (dl) {
+                    const opt = document.createElement('option');
+                    opt.value = eq.codigo;
+                    opt.innerText = eq.nombre;
+                    dl.appendChild(opt);
+                }
+                
+                let defaultIcon = '<i class="fa-solid fa-server"></i>';
+                if(eq.tipo.toLowerCase().includes('aire')) defaultIcon = '<i class="fa-solid fa-snowflake"></i>';
+                if(eq.tipo.toLowerCase().includes('ascensor')) defaultIcon = '<i class="fa-solid fa-elevator"></i>';
+                if(eq.tipo.toLowerCase().includes('planta')) defaultIcon = '<i class="fa-solid fa-bolt"></i>';
+                if(eq.tipo.toLowerCase().includes('computador')) defaultIcon = '<i class="fa-solid fa-desktop"></i>';
+                
+                const iconDiv = `<div class="w-8 h-8 rounded bg-slate-100 flex items-center justify-center mr-3 text-slate-500">${defaultIcon}</div>`;
+                
+                let badgeClass = "bg-emerald-100 text-emerald-700";
+                if(eq.estado.toLowerCase().includes('mantenimiento')) badgeClass = "bg-amber-100 text-amber-700";
+                if(eq.estado.toLowerCase().includes('falla') || eq.estado.toLowerCase().includes('fuera')) badgeClass = "bg-red-100 text-red-700";
+
+                const tr = document.createElement('tr'); tr.className='db-eq bg-brand-50/20 hover:bg-brand-50/40 transition-colors cursor-pointer';
+                tr.innerHTML = `
+                    <td onclick="abrirDetalleEquipo(${eq.id})" class="font-medium text-brand-600">${eq.codigo}</td>
+                    <td onclick="abrirDetalleEquipo(${eq.id})"><div class="flex items-center">${iconDiv}<div><p class="font-semibold text-brand-700 hover:underline">${eq.nombre}</p></div></div></td>
+                    <td onclick="abrirDetalleEquipo(${eq.id})">${eq.marca}</td>
+                    <td onclick="abrirDetalleEquipo(${eq.id})">${eq.ubicacion}</td>
+                    <td onclick="abrirDetalleEquipo(${eq.id})"><span class="px-2 py-1 ${badgeClass} rounded-full text-xs font-bold">${eq.estado}</span></td>
+                    <td onclick="abrirDetalleEquipo(${eq.id})" class="text-center font-bold">${eq.cantidad || 1}</td>
+                    <td class="text-right">
+                        <button onclick="document.getElementById('fallaEq').value='${eq.codigo}'; openModal('modalFalla')" class="text-amber-500 hover:text-amber-600 p-1 mr-1" title="Reportar Falla"><i class="fa-solid fa-triangle-exclamation"></i></button>
+                        <button onclick="eliminarBD('/api/equipos/${eq.id}', cargarEquipos)" class="text-red-400 hover:text-red-600 p-1"><i class="fa-solid fa-trash-can"></i></button>
+                    </td>`;
+                document.getElementById('tbody-equipos').appendChild(tr);
+            });
+            renderMapa();
+        }
+        
+        function renderMapa() {
+            const container = document.getElementById('map-pins-container');
+            if(!container) return;
+            container.innerHTML = '';
+            
+            equiposList.forEach(eq => {
+                let top = '50%'; let left = '50%';
+                const ubi = (eq.ubicacion || '').toLowerCase();
+                
+                // Distribución topográfica 3x3 por zonas clave
+                if(ubi.includes('quir') || ubi.includes('uci') || ubi.includes('intensiv')) { top = '18%'; left = '18%'; }
+                else if(ubi.includes('lab')) { top = '18%'; left = '50%'; }
+                else if(ubi.includes('rayos') || ubi.includes('imagen')) { top = '18%'; left = '82%'; }
+                
+                else if(ubi.includes('hosp') || ubi.includes('habita')) { top = '50%'; left = '18%'; }
+                else if(ubi.includes('recep') || ubi.includes('central') || ubi.includes('pasillo')) { top = '50%'; left = '50%'; }
+                else if(ubi.includes('consul') || ubi.includes('medico')) { top = '50%'; left = '82%'; }
+                
+                else if(ubi.includes('cafe') || ubi.includes('comedor')) { top = '82%'; left = '18%'; }
+                else if(ubi.includes('estaciona') || ubi.includes('ext')) { top = '82%'; left = '50%'; }
+                else if(ubi.includes('m') && ubi.includes('quina') || ubi.includes('planta') || eq.tipo.toLowerCase().includes('planta') || eq.tipo.toLowerCase().includes('ascensor')) { top = '82%'; left = '82%'; }
+                
+                // Si no tiene ubicación reconocible, lo asignamos a Recepción central pero más disperso
+                else { top = '50%'; left = '50%'; }
+                
+                // Determinar el Z-index (Piso) en el modelo 3D
+                let floorZ = 50; // PB
+                if(ubi.includes('piso 1') || ubi.includes('piso i ')) floorZ = 150;
+                else if(ubi.includes('piso 2') || ubi.includes('piso ii')) floorZ = 250;
+                else if(ubi.includes('piso 3') || ubi.includes('piso iii')) floorZ = 350;
+                else if(ubi.includes('piso 4') || ubi.includes('azotea')) floorZ = 450;
+                // Si está en hospitalización o quirófano y no dice piso, lo mandamos al piso 2 por defecto
+                else if(ubi.includes('hosp') || ubi.includes('quir')) floorZ = 250;
+                
+                const isFalla = eq.estado.toLowerCase().includes('falla') || eq.estado.toLowerCase().includes('mantenimiento');
+                const colorClass = isFalla ? 'bg-red-500 animate-pulse' : 'bg-brand-500 hover:bg-brand-400';
+                const ringClass = isFalla ? 'ring-4 ring-red-500/30' : 'ring-4 ring-brand-500/30';
+                
+                // Variación aleatoria para que no queden uno exactamente encima de otro en el plano
+                const jitterTop = (Math.random() - 0.5) * 14;
+                const jitterLeft = (Math.random() - 0.5) * 14;
+                
+                const pin = document.createElement('div');
+                pin.className = `plano-pin absolute w-5 h-5 md:w-6 md:h-6 rounded-full ${colorClass} ${ringClass} cursor-pointer pointer-events-auto flex items-center justify-center text-white shadow-lg hover:scale-125 transition-all z-10 group`;
+                pin.style.top = `calc(${top} + ${jitterTop}%)`;
+                pin.style.left = `calc(${left} + ${jitterLeft}%)`;
+                pin.style.setProperty('--pin-z', `${floorZ}px`);
+                pin.title = `${eq.codigo} - ${eq.nombre}`;
+                if(isFalla) pin.innerHTML = '<i class="fa-solid fa-exclamation text-[10px]"></i>';
+                
+                const label = document.createElement('div');
+                label.className = `absolute -top-8 left-1/2 transform -translate-x-1/2 bg-slate-800 text-white text-xs font-bold px-2 py-1 rounded shadow-md whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-50`;
+                label.innerText = eq.ubicacion || 'Recepción Principal';
+                pin.appendChild(label);
+                
+                pin.onclick = () => abrirDetalleEquipo(eq.id);
+                container.appendChild(pin);
+            });
+        }
+        function abrirDetalleEquipo(id) {
+            const eq = equiposList.find(e => e.id === id);
+            if(!eq) return;
+            
+            document.getElementById('detEqCod').innerText = eq.codigo;
+            document.getElementById('detEqEst').innerHTML = `<span class="px-2 py-1 bg-slate-100 text-slate-700 rounded text-xs font-bold border border-slate-200">${eq.estado}</span>`;
+            document.getElementById('detEqNom').innerText = eq.nombre;
+            document.getElementById('detEqTip').innerText = eq.tipo;
+            document.getElementById('detEqMar').innerText = eq.marca;
+            document.getElementById('detEqUbi').innerText = eq.ubicacion;
+            document.getElementById('detEqCant').innerText = eq.cantidad || 1;
+            openModal('modalDetalleEquipo');
+        }
+        async function guardarEquipo(e) { e.preventDefault(); const fd = {nombre: document.getElementById('eqNombre').value, codigo: document.getElementById('eqCodigo').value, tipo: document.getElementById('eqTipo').value, ubicacion: document.getElementById('eqUbicacion').value, marca: document.getElementById('eqMarca').value, cantidad: document.getElementById('eqCant').value}; await req('/api/equipos', 'POST', fd, false); closeModals(); showToast('Equipo Guardado BD'); e.target.reset(); cargarEquipos(); }
+
+        // Repuestos
+        let repuestosList = [];
+        async function cargarRepuestos() {
+            repuestosList = await req('/api/repuestos', 'GET');
+            document.querySelectorAll('.db-rp').forEach(e => e.remove());
+            repuestosList.forEach(rp => {
+                const tr = document.createElement('tr'); tr.className='db-rp bg-brand-50/20 hover:bg-brand-50/40 transition-colors cursor-pointer';
+                tr.innerHTML = `<td onclick="abrirDetalleRepuesto(${rp.id})">${rp.codigo}</td><td onclick="abrirDetalleRepuesto(${rp.id})" class="font-semibold text-brand-700 hover:underline">${rp.descripcion}</td><td onclick="abrirDetalleRepuesto(${rp.id})">${rp.categoria}</td><td onclick="abrirDetalleRepuesto(${rp.id})"><span class="bg-brand-100 px-2 py-1 rounded text-xs font-bold">${rp.stock} un.</span></td><td><button onclick="abrirEditarRepuesto(${rp.id}, '${rp.stock}', '${rp.descripcion}')" class="text-brand-500 hover:text-brand-700 mr-2"><i class="fa-solid fa-pen"></i></button><button onclick="eliminarBD('/api/repuestos/${rp.id}', cargarRepuestos)" class="text-red-400 hover:text-red-600"><i class="fa-solid fa-trash-can"></i></button></td>`;
+                document.getElementById('tbody-repuestos').appendChild(tr);
+            });
+        }
+        function abrirDetalleRepuesto(id) {
+            const rp = repuestosList.find(e => e.id === id);
+            if(!rp) return;
+            
+            document.getElementById('detRepCod').innerText = rp.codigo;
+            document.getElementById('detRepStock').innerText = rp.stock + ' unidades';
+            document.getElementById('detRepDesc').innerText = rp.descripcion;
+            document.getElementById('detRepCat').innerText = rp.categoria;
+            openModal('modalDetalleRepuesto');
+        }
+        async function guardarRepuesto(e) { e.preventDefault(); const fd = {codigo: document.getElementById('repRef').value, descripcion: document.getElementById('repDesc').value, categoria: document.getElementById('repCat').value, stock: document.getElementById('repStock').value}; await req('/api/repuestos', 'POST', fd, false); closeModals(); showToast('Repuesto Guardado BD'); e.target.reset(); cargarRepuestos(); }
+        function abrirEditarRepuesto(id, stock, desc) { document.getElementById('editRepId').value = id; document.getElementById('editRepStock').value = stock; document.getElementById('editRepDesc').value = desc; openModal('modalEditarRepuesto'); }
+        async function guardarEdicionRepuesto(e) { e.preventDefault(); const id = document.getElementById('editRepId').value; await req(`/api/repuestos/${id}`, 'PUT', {stock: document.getElementById('editRepStock').value, descripcion: document.getElementById('editRepDesc').value}); closeModals(); showToast('Repuesto Actualizado'); cargarRepuestos(); }
+
+        // Tecnicos
+        async function cargarTecnicos() {
+            const data = await req('/api/tecnicos', 'GET');
+            document.querySelectorAll('.db-tc').forEach(e => e.remove());
+            data.forEach(tc => {
+                const div = document.createElement('div'); div.className='db-tc bg-white p-5 rounded-xl border border-brand-200 shadow-sm text-center relative card-hover';
+                div.innerHTML = `<button onclick="eliminarBD('/api/tecnicos/${tc.id}', cargarTecnicos)" class="absolute top-3 right-3 text-slate-300 hover:text-red-500 transition-colors"><i class="fa-solid fa-trash-can"></i></button><div class="w-16 h-16 bg-brand-100 text-brand-600 rounded-full mx-auto flex items-center justify-center text-xl font-bold mb-3 border-2 border-white shadow-sm">${tc.nombre.charAt(0)}</div><h3 class="font-bold text-lg">${tc.nombre}</h3><p class="text-sm font-bold text-brand-600 mb-3">${tc.especialidad}</p><p class="text-xs text-slate-500 mb-2 bg-slate-50 p-2 rounded-lg"><i class="fa-solid fa-phone mr-1"></i> ${tc.telefono || 'N/A'}<br><i class="fa-solid fa-envelope mr-1"></i> ${tc.correo || 'N/A'}</p><span class="px-3 py-1 bg-emerald-50 text-emerald-600 rounded-full text-xs font-bold border border-emerald-200">${tc.estado}</span>`;
+                document.getElementById('tecnicos-grid').appendChild(div);
+            });
+        }
+        async function guardarTecnico(e) { e.preventDefault(); await req('/api/tecnicos', 'POST', {nombre: document.getElementById('tecNombre').value, especialidad: document.getElementById('tecEspec').value, telefono: document.getElementById('tecTel').value, correo: document.getElementById('tecCorreo').value}); closeModals(); showToast('Técnico BD'); e.target.reset(); cargarTecnicos(); }
+
+        // Proveedores
+        async function cargarProveedores() {
+            const data = await req('/api/proveedores', 'GET');
+            document.querySelectorAll('.db-pv').forEach(e => e.remove());
+            data.forEach(pv => {
+                const tr = document.createElement('tr'); tr.className='db-pv';
+                tr.innerHTML = `<td class="font-bold text-brand-700">${pv.empresa}</td><td class="font-medium text-slate-700">${pv.servicio}</td><td><i class="fa-solid fa-phone text-slate-400 mr-1 text-sm"></i> ${pv.telefono || 'N/A'}<br><span class="text-xs text-slate-500"><i class="fa-solid fa-envelope mr-1"></i> ${pv.correo || 'N/A'}</span></td><td><button onclick="eliminarBD('/api/proveedores/${pv.id}', cargarProveedores)" class="text-slate-400 hover:text-red-500 transition-colors"><i class="fa-solid fa-trash-can"></i></button></td>`;
+                document.getElementById('tbody-proveedores').appendChild(tr);
+            });
+        }
+        async function guardarProveedor(e) { e.preventDefault(); await req('/api/proveedores', 'POST', {empresa: document.getElementById('provEmpresa').value, servicio: document.getElementById('provServicio').value, telefono: document.getElementById('provTel').value, correo: document.getElementById('provCorreo').value}); closeModals(); showToast('Proveedor BD'); e.target.reset(); cargarProveedores(); }
+
+        // Ordenes
+        function switchOtTab(tab) {
+            document.getElementById('btn-tab-activos').className = tab === 'activos' ? "px-6 py-3 font-bold text-brand-600 border-b-2 border-brand-600 transition-colors" : "px-6 py-3 font-bold text-slate-500 border-b-2 border-transparent hover:text-slate-700 transition-colors";
+            document.getElementById('btn-tab-historial').className = tab === 'historial' ? "px-6 py-3 font-bold text-brand-600 border-b-2 border-brand-600 transition-colors" : "px-6 py-3 font-bold text-slate-500 border-b-2 border-transparent hover:text-slate-700 transition-colors";
+            document.getElementById('lista-ordenes').classList.toggle('hidden', tab !== 'activos');
+            document.getElementById('lista-historial').classList.toggle('hidden', tab !== 'historial');
+        }
+
+        async function cargarOrdenes() {
+            const data = await req('/api/ordenes', 'GET');
+            document.querySelectorAll('.db-ot').forEach(e => e.remove());
+            const activos = document.getElementById('lista-ordenes');
+            const historial = document.getElementById('lista-historial');
+            
+            data.forEach(ot => {
+                let borderCol = ot.tipo.toLowerCase().includes('preventivo') ? 'border-l-amber-500' : 'border-l-red-500';
+                if(ot.estado === 'Completado') borderCol = 'border-l-emerald-500';
+                
+                const div = document.createElement('div'); div.className=`db-ot bg-white p-5 rounded-xl border-l-4 ${borderCol} border-y border-r border-slate-200 shadow-sm flex flex-col sm:flex-row gap-4`;
+                div.innerHTML = `<div class="flex-1"><div class="flex items-center gap-2 mb-2"><span class="px-2 py-0.5 bg-slate-100 text-slate-600 rounded text-xs font-bold border border-slate-200">${ot.codigo}</span><span class="px-2 py-0.5 bg-brand-50 text-brand-700 rounded text-xs font-bold uppercase border border-brand-100">${ot.tipo}</span><span class="px-2 py-0.5 border border-slate-200 rounded text-[10px] font-bold uppercase ml-auto">${ot.estado}</span></div><h3 class="font-bold text-slate-800 text-lg mb-1">${ot.descripcion}</h3><p class="text-sm font-medium text-slate-600"><i class="fa-solid fa-server text-slate-400 mr-1"></i> ${ot.equipo}</p></div><div class="sm:border-l sm:border-slate-100 sm:pl-4 flex flex-col justify-between items-end"><span class="font-bold text-sm text-slate-700 mb-2">${ot.asignado}</span><div class="flex gap-2"><button onclick="abrirGestionar(${ot.id}, '${ot.estado}', '${ot.equipo}')" class="px-4 py-1.5 bg-white border border-slate-300 hover:bg-slate-50 text-slate-700 text-sm font-bold rounded shadow-sm transition-colors btn-clicky">Gestionar</button><button onclick="eliminarBD('/api/ordenes/${ot.id}', cargarOrdenes)" class="px-3 py-1.5 bg-red-50 hover:bg-red-100 text-red-600 border border-red-200 rounded shadow-sm transition-colors btn-clicky"><i class="fa-solid fa-trash"></i></button></div></div>`;
+                
+                if(ot.estado === 'Completado') {
+                    historial.appendChild(div);
+                } else {
+                    activos.appendChild(div);
+                }
+            });
+            cargarDashboardStats();
+        }
+        async function guardarOrden(e) { e.preventDefault(); await req('/api/ordenes', 'POST', { tipo: document.querySelector('input[name="otTipo"]:checked').value, equipo: document.getElementById('otEquipo').value, descripcion: document.getElementById('otDesc').value, asignado: document.getElementById('otAsignado').value }); closeModals(); showToast('OT Creada en BD'); e.target.reset(); cargarOrdenes(); }
+        async function reportarFalla(e) { e.preventDefault(); await req('/api/ordenes', 'POST', { tipo: 'Correctivo URGENTE', equipo: document.getElementById('fallaEq').value, descripcion: document.getElementById('fallaDesc').value, asignado: 'Sin asignar' }); closeModals(); showToast('Falla reportada a BD'); e.target.reset(); cargarOrdenes(); }
+        
+        function abrirGestionar(id, estado, equipo) { document.getElementById('gestionOtId').value = id; document.getElementById('gestionOtEstado').value = estado; document.getElementById('gestionOtEq').value = equipo; openModal('modalGestionarOT'); }
+        async function actualizarEstadoOT(e) { e.preventDefault(); const id = document.getElementById('gestionOtId').value; const est = document.getElementById('gestionOtEstado').value; const eq = document.getElementById('gestionOtEq').value; await req(`/api/ordenes/${id}/estado`, 'PUT', {estado: est, equipo: eq}); closeModals(); showToast('Estado BD actualizado'); cargarOrdenes(); cargarEquipos(); }
+
+        async function eliminarBD(url, reloadFn) { 
+            abrirConfirmacion('¿Estás seguro de que deseas eliminar permanentemente este registro de la base de datos?', async () => {
+                await req(url, 'DELETE'); 
+                showToast('Eliminado de BD exitosamente', false); 
+                reloadFn(); 
+            }); 
+        }
+
+        let dashChart = null;
+        async function cargarDashboardStats() {
+            try {
+                const stats = await req('/api/stats', 'GET');
+                document.getElementById('dash-eq').innerText = stats.totalEquipos;
+                document.getElementById('dash-prev').innerText = stats.preventivos;
+                document.getElementById('dash-fallas').innerText = stats.fallas;
+                
+                // Actualizar gráfica
+                const ctx = document.getElementById('dashboardChart');
+                if(!ctx) return;
+                
+                if(dashChart) {
+                    dashChart.data.datasets[0].data = stats.chartData;
+                    dashChart.update();
+                } else {
+                    dashChart = new Chart(ctx, {
+                        type: 'doughnut',
+                        data: {
+                            labels: ['Preventivos', 'Correctivos'],
+                            datasets: [{
+                                data: stats.chartData,
+                                backgroundColor: ['#f59e0b', '#ef4444'],
+                                hoverOffset: 4
+                            }]
+                        },
+                        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom' } } }
+                    });
+                }
+            } catch(e) { console.error("Error cargando stats", e); }
+        }
+
+        // CSV Export
+        async function descargarExcel() {
+            const data = await req('/api/equipos', 'GET');
+            if(data.length === 0) return showToast('No hay datos en BD para exportar');
+            const csv = 'ID,CODIGO,NOMBRE,MARCA,UBICACION\n' + data.map(e => `${e.id},${e.codigo},${e.nombre},${e.marca},${e.ubicacion}`).join('\n');
+            const blob = new Blob([csv], { type: 'text/csv' });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a'); a.href = url; a.download = 'inventario_clinimant.csv'; a.click();
+        }
+
+        window.onload = () => { initAuth(); };
+    </script>
+</body>
+</html>
